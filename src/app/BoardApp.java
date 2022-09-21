@@ -10,24 +10,21 @@ import model.Snake;
 public class BoardApp {
 	
 	private Board board;
-	
-	private static final int BOARD_SIZE = 25;
-	
-	/**
-	 * Attributes for the bonus
-	 */
-    private int initialPlayers;
+    private int initialNumberOfPlayers;
     private Queue<Player> players; 
-    
+    private boolean isGameCompleted;
+
+
+    private static final int DEFAULT_BOARD_SIZE = 25 ;
+    private static final int DEFAULT_NO_OF_DICES = 1;
+
     public BoardApp(int boardSize) {
-    	
-        this.board= new Board(boardSize);
+        this.board = new Board(boardSize);
         this.players = new LinkedList<Player>();
     }
-    
-    //Constructor for the default size
+
     public BoardApp() {
-        this(BoardApp.BOARD_SIZE);
+        this(BoardApp.DEFAULT_BOARD_SIZE);
     }
 
     /**
@@ -35,28 +32,26 @@ public class BoardApp {
      */
 
     public void setPlayers(List<Player> players) {
-    	
         this.players = new LinkedList<Player>();
-        this.initialPlayers = players.size();
-        Map<Integer, Integer> playerPieces = new HashMap<Integer, Integer>();
-        
+        this.initialNumberOfPlayers = players.size();
+        Map<String, Integer> playerPieces = new HashMap<String, Integer>();
         for (Player player : players) {
             this.players.add(player);
-            playerPieces.put(player.getNumber(), 0); //setting a player at a predefined position, in this case 0
+            playerPieces.put(player.getId(), 0); //Each player has a piece which is initially kept outside the board (i.e., at position 0).
         }
-        board.setPlayerPieces(playerPieces); 
+        board.setPlayerPieces(playerPieces); //  Add pieces to board
     }
-    
     
     /*
      * Methods used to add a customized group of snakes and ladders to the game
      */
+
     public void setSnakes(List<Snake> snakes) {
-        board.setSnakes(snakes); 
+        board.setSnakes(snakes); // Add snakes to board
     }
 
     public void setLadders(List<Ladder> ladders) {
-        board.setLadders(ladders);
+        board.setLadders(ladders); // Add ladders to board
     }
 
     /**
@@ -71,79 +66,71 @@ public class BoardApp {
      * For a custom player, get its position in the board and allows to calculate a new
      * position square, based on the value defined by the method rollDice    
      */
-    private void movePlayer(Player player, int actual) {
-        
-    	int oldPosition = board.getPlayerPieces().get(player.getNumber());
-        int newPosition = oldPosition + actual;
 
-        int boardSize = board.getSize();
+    private int calculateNewPosition(int newPosition) {
+        int previousPosition;
 
-        if (newPosition > boardSize) {
-      
-            newPosition = oldPosition; //Avoid bypass the board size for the winners.
-        } else {
-            newPosition = calculatePosition(newPosition);
-        }
-
-        board.getPlayerPieces().put(player.getNumber(), newPosition);
-
-        System.out.println(player.getNumber() + " rolled a " + actual + " and moved from " + oldPosition +" to " + newPosition);
-    }
-    
-    private int calculatePosition(int newPosition) {
-    	
-    	int lastSquare = newPosition;
-    	
-    	
-    	do {
-    	
-    		for (Snake snake : board.getSnakes()) {
+        do {
+            previousPosition = newPosition;
+            for (Snake snake : board.getSnakes()) {
                 if (snake.getStart() == newPosition) {
-                    newPosition = snake.getEnd(); 
-                    System.out.println("A snake has swallowed you, your position: " + newPosition);
-         
+                    newPosition = snake.getEnd(); // Whenever a piece ends up at a position with the head of the snake, the piece should go down to the position of the tail of that snake.
                 }
             }
 
             for (Ladder ladder : board.getLadders()) {
                 if (ladder.getStart() == newPosition) {
-                    newPosition = ladder.getEnd(); 
-                	System.out.println("Climbing up :), your position: " + newPosition);
+                    newPosition = ladder.getEnd(); // Whenever a piece ends up at a position with the start of the ladder, the piece should go up to the position of the end of that ladder.
                 }
             }
-    		
-    	} while(newPosition != lastSquare);
-    	
-    	
-		return newPosition;
-	}
+        } while (newPosition != previousPosition); // There could be another snake/ladder at the tail of the snake or the end position of the ladder and the piece should go up/down accordingly.
+        return newPosition;
+    }
+
+    private void movePlayer(Player player, int positions) {
+        int oldPosition = board.getPlayerPieces().get(player.getId());
+        int newPosition = oldPosition + positions; // Based on the dice value, the player moves their piece forward that number of cells.
+
+        int boardSize = board.getSize();
+
+     
+        if (newPosition > boardSize) {
+            newPosition = 25; // After the dice roll, if a piece is supposed to move outside position 100, it does not move.
+        } else {
+            newPosition = calculateNewPosition(newPosition);
+        }
+
+        board.getPlayerPieces().put(player.getId(), newPosition);
+
+        System.out.println(player.getName() + " rolled a " + positions + " and moved from " + oldPosition +" to " + newPosition);
+    }
+
+    private int getTotalValueAfterDiceRolls() {
+        
+        return Dice.rollDice();
+    }
+    
 
 	/*
      * Check if a custom player has reached the end of the board, thus being selected
      * as the winner
      */
-    private boolean checkWinner(Player player) {
-        
-        int playerPosition = board.getPlayerPieces().get(player.getNumber());
+    private boolean hasPlayerWon(Player player) {
+      
+        int playerPosition = board.getPlayerPieces().get(player.getId());
         int winningPosition = board.getSize();
-        return playerPosition == winningPosition; 
+        return playerPosition == winningPosition; // A player wins if it exactly reaches the position 100 and the game ends there.
     }
+    
     
     /*
      * Helps to determinate if the game should end as a player have reached the end of
      * the board
      */
     private boolean isGameCompleted() {
-        
+       
         int currentNumberOfPlayers = players.size();
-        return currentNumberOfPlayers < initialPlayers;
-    }
-    
-    /*
-     * A complex mechanism to get a random number between 1 and 6
-     */
-    private int rollDice() {
-    	return Dice.rollDice();
+        return currentNumberOfPlayers < initialNumberOfPlayers;
     }
     
     /*
@@ -151,22 +138,17 @@ public class BoardApp {
      * and manage the number of players.
      */
     public void startGame() {
-    	
-    	boolean flag = true;
-    	
-        while (flag) {
-            int totalDiceValue = rollDice(); 
+        while (!isGameCompleted()) {
+            int totalDiceValue = getTotalValueAfterDiceRolls(); // Each player rolls the dice when their turn comes.
             Player currentPlayer = players.poll();
             movePlayer(currentPlayer, totalDiceValue);
-            
-            if (checkWinner(currentPlayer)) {
-                System.out.println(currentPlayer.getNumber() + " wins the game");
-                flag =false;
-                board.getPlayerPieces().remove(currentPlayer.getNumber());
+            if (hasPlayerWon(currentPlayer)) {
+                System.out.println(currentPlayer.getName() + " wins the game");
+                board.getPlayerPieces().remove(currentPlayer.getId());
             } else {
                 players.add(currentPlayer);
             }
         }
-    }	
+    }
 
 }

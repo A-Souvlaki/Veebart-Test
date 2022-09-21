@@ -31,8 +31,8 @@ public class Main {
         int noOfPlayers = scanner.nextInt();
         List<Player> players = new ArrayList<Player>();
         for (int i = 0; i < noOfPlayers; i++) {
-        	System.out.println("Ingrese el numero del jugador");
-            players.add(new Player(scanner.nextInt()));
+        	System.out.println("Choose a name for the player");
+            players.add(new Player(scanner.next()));
         }
 
         BoardApp bp = new BoardApp();

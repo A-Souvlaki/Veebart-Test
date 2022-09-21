@@ -1,15 +1,21 @@
 package model;
 
+import java.util.UUID;
+
 public class Player {
-	
-    private int number;
+    private String name;
+    private String id;
 
-
-    public Player(int number) {
-        this.number = number;
+    public Player(String name) {
+        this.name = name;
+        this.id = UUID.randomUUID().toString();
     }
 
-    public int getNumber() {
-        return number;
+    public String getName() {
+        return name;
+    }
+
+    public String getId() {
+        return id;
     }
 }

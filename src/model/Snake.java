@@ -2,7 +2,7 @@ package model;
 
 public class Snake {
    
-    private int start;
+	private int start;
     private int end;
 
     public Snake(int start, int end) {
