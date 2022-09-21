@@ -1,0 +1,60 @@
+public class Snakes {
+    
+    public void run(){
+        
+        System.debug('WELCOME');
+        
+   		Map<Integer, Integer> snakes = new Map<Integer, Integer>();
+		Map<Integer, Integer> laders = new Map<Integer, Integer>();
+	
+	
+
+		laders.put(3, 11);
+		laders.put(6, 17);
+		laders.put(9, 18);
+		laders.put(10, 12);
+
+		snakes.put(14, 14);
+		snakes.put(19, 8);
+		snakes.put(22, 20);
+		snakes.put(24, 16);
+        
+      
+            
+        Integer pos = 0;
+        
+        Boolean flag = false;
+        
+        while(!false){
+            
+            Integer dice = Integer.valueOf((Math.random()*6)+1);
+        	System.debug('Roll Dice'+dice);
+                
+            pos = pos + dice;
+            
+            if (pos >= 25) {
+				System.debug('You have exceded by: ' + (pos-25) + ' squares');
+				pos = 25;
+                System.debug('Win');
+                flag = !flag;
+            }else {
+                System.debug('Player has moved to: ' + pos);
+                if (null != snakes.get(pos)) {
+					System.debug('A snake has swallowed you, your position: ' + pos);
+					pos = snakes.get(pos);
+				}
+            
+            	if (null != laders.get(pos)) {
+					System.debug('Climbing up :), your position: ' + pos);
+					pos = laders.get(pos);
+				}
+            }
+            
+           
+            
+        }
+        
+            
+    }
+    
+}
